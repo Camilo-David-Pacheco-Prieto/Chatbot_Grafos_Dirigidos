@@ -35,14 +35,21 @@ render.yaml               Blueprint de Render (variables con sync:false, sin val
 .env.example              plantilla de variables (ZAPIER_WEBHOOK_URL, CALLBACK_SECRET)
 src/lib/env.js            getWebhookUrl(), getCallbackSecret(): lectura de variables (solo servidor)
 src/lib/store.js          almacén en memoria con TTL de 30 min; único punto a cambiar para migrar a Redis
-src/pages/index.astro     toda la UI + <script> vanilla (chat, menú lateral de recientes en localStorage,
-                          polling cada 2 s hasta 120 s, Markdown con marked + DOMPurify)
+src/pages/index.astro     toda la UI + <script> vanilla (chat, menú lateral con fijados/grupos/orden/búsqueda/exportar
+                          y tema en localStorage [grafos-chat-v1, grafos-prefs-v1, grafos-side-collapsed],
+                          menús y diálogos propios, polling cada 2 s hasta 120 s, Markdown con marked + DOMPurify)
 src/pages/api/chat.js             POST: valida y reenvía la pregunta a Zapier
 src/pages/api/chat/callback.js    POST: recibe la respuesta de Zapier
 src/pages/api/chat/[id].js        GET: estado de una conversación
 ```
 
 `store.js` exporta `createPending(id)`, `getConversation(id)` (devuelve `null` si no existe o expiró), `completeConversation(id, text)` y `deleteConversation(id)`. Si lo migras a Redis, mantén esa interfaz (hazla `async` y añade `await` en los endpoints). El almacén actual no sirve con varias instancias ni en serverless.
+
+## Reglas de la interfaz
+
+- Fijar, grupos, renombrar, orden y tema son **solo locales** (campos `pinned`, `group`, `renamed` en cada chat y `grafos-prefs-v1`); no tocan el backend ni el contrato. Mantén compatibles los datos antiguos de `localStorage`.
+- El pie mantiene el aviso de errores (en móvil solo ese, corto) y la nota de la fuente (Capítulo 9) en PC. La nota es informativa; no cambia lo que responde el agente.
+- Versiones: `v1.0.0` = primera versión desplegada, `v2.0.0` = rediseño de la UI.
 
 ## Contrato de los endpoints
 

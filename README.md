@@ -2,6 +2,14 @@
 
 Chat web para un tutor académico de **grafos dirigidos (dígrafos)**. El navegador habla con un backend hecho en **Astro (SSR, JavaScript, adaptador de Node)**, que reenvía cada pregunta a un **agente de Zapier** y devuelve la respuesta (en Markdown) cuando el agente termina.
 
+## Interfaz
+
+- **Inicio:** saludo según la hora, sugerencias y caja de texto; pie con el aviso de que el tutor puede cometer errores y (en PC) la fuente de las respuestas: Capítulo 9 de *Graph Theory with Applications to Engineering and Computer Science*. Es solo un texto informativo; el contenido lo define el agente de Zapier.
+- **Menú lateral:** colapsable en PC y panel superpuesto en móvil. Secciones Fijados y Chats; botón *Agrupar y ordenar* (más recientes, más antiguos, alfabético; sin agrupar, por fecha o por grupos propios); lupa que busca en títulos y mensajes.
+- **Menú de cada conversación (⋮, clic derecho o flecha junto al título):** fijar (P), cambiar nombre (R), mover a un grupo, exportar a Markdown, copiar y eliminar (D) con opción de deshacer. En móvil se muestra como hoja inferior.
+- **Pie del menú lateral:** tema (sistema, claro, oscuro), exportar todo en JSON y borrar el historial.
+- Todo lo anterior es solo presentación: no cambia el contrato de los endpoints ni el flujo con Zapier.
+
 ## Arquitectura
 
 Zapier no responde de forma síncrona: el agente puede tardar decenas de segundos. Por eso el flujo es asíncrono: el servidor envía la pregunta, Zapier devuelve la respuesta más tarde con un *callback*, y el navegador consulta (*polling*) hasta que está lista.
@@ -30,7 +38,7 @@ Zapier no responde de forma síncrona: el agente puede tardar decenas de segundo
 
 | Pieza | Archivo | Qué hace |
 |---|---|---|
-| Interfaz | `src/pages/index.astro` | Chat con menú lateral de recientes (guardados en el `localStorage` del navegador), sugerencias y polling. |
+| Interfaz | `src/pages/index.astro` | Chat con menú lateral colapsable, gestión de conversaciones (fijar, renombrar, grupos, orden, exportar, búsqueda; todo en el `localStorage` del navegador), tema claro/oscuro, sugerencias y polling. |
 | Enviar pregunta | `src/pages/api/chat.js` | Valida, crea el id, llama al webhook de Zapier. |
 | Callback | `src/pages/api/chat/callback.js` | Recibe la respuesta de Zapier (protegido con `x-callback-secret`). |
 | Consulta | `src/pages/api/chat/[id].js` | Devuelve el estado de una conversación. |
@@ -135,7 +143,7 @@ Regla: crea y despliega primero el servicio para obtener su URL pública; solo d
 - **Almacén en memoria.** Las conversaciones viven en un `Map` con expiración de 30 minutos. Se pierden al reiniciar el servicio, y **no funciona con varias instancias** (el callback podría llegar a una instancia distinta de la que espera el navegador) **ni en Vercel/serverless**. Para escalar, migra `src/lib/store.js` a Redis conservando sus funciones (`createPending`, `getConversation`, `completeConversation`, `deleteConversation`).
 - **Planes gratuitos que duermen el servicio.** En Render gratuito el servicio se suspende tras un rato sin tráfico; la primera petición tarda ~50 s en despertar. Una respuesta pendiente se pierde si el servicio se reinicia antes del callback.
 - **ngrok solo para desarrollo.** Su URL gratuita cambia en cada arranque.
-- El historial del menú lateral vive en el `localStorage` del navegador (no se comparte entre dispositivos). Solo se procesa una pregunta a la vez por pestaña.
+- El historial, los fijados, los grupos y las preferencias (orden, tema) viven en el `localStorage` del navegador (no se comparten entre dispositivos; borrar los datos del sitio los elimina). Solo se procesa una pregunta a la vez por pestaña.
 
 ## Solución de problemas
 
