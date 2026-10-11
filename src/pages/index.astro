@@ -213,6 +213,7 @@ const suggestions = [
       let activeId = null; // null = conversación nueva (aún sin mensajes)
       let busy = false;
       let pendingChatId = null;
+      let failed = null; // { chatId, message, cancelled } de la última pregunta sin respuesta
 
       const activeChat = () => chats.find((c) => c.id === activeId) || null;
 
@@ -817,11 +818,21 @@ const suggestions = [
         row.className = 'msg agent';
         row.id = 'typing';
         row.innerHTML =
-          '<div class="body typing"><svg class="mini-spark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="17" r="2.4"/><circle cx="12" cy="6" r="2.4"/><circle cx="19" cy="15" r="2.4"/></svg><span>Preparando la respuesta</span><span class="elapsed" id="elapsed"></span><button type="button" class="cancel" id="cancel-wait">Cancelar</button></div>';
-        row.querySelector('#cancel-wait').addEventListener('click', () => {
-          cancelled = true;
-          wake?.();
-        });
+          '<div class="body typing"><svg class="mini-spark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="17" r="2.4"/><circle cx="12" cy="6" r="2.4"/><circle cx="19" cy="15" r="2.4"/></svg><span>Preparando la respuesta</span><span class="elapsed" id="elapsed"></span></div>';
+        return row;
+      }
+
+      function retryRow() {
+        const row = document.createElement('div');
+        row.className = 'retry-row';
+        const label = document.createElement('span');
+        label.textContent = failed.cancelled ? 'Respuesta cancelada' : 'No se pudo obtener la respuesta';
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = 'Reintentar';
+        const msg = failed.message;
+        b.addEventListener('click', () => ask(msg, { retry: true }));
+        row.append(label, b);
         return row;
       }
 
@@ -833,6 +844,7 @@ const suggestions = [
         thread.replaceChildren();
         if (chat) for (const m of chat.messages) thread.appendChild(messageRow(m.role, m.text));
         if (busy && pendingChatId === activeId) thread.appendChild(typingRow());
+        else if (failed && failed.chatId === activeId) thread.appendChild(retryRow());
         chatTitle.textContent = chat ? chat.title : 'Nueva conversación';
         $('chat-menu-btn').hidden = !chat;
         document.title = chat ? `${chat.title} · Tutor de grafos` : 'Tutor de grafos dirigidos';
@@ -847,24 +859,23 @@ const suggestions = [
       }
 
       // ---------- UI helpers ----------
-      function showError(msg, retryMessage) {
-        errorBox.replaceChildren(document.createTextNode(msg));
-        if (retryMessage) {
-          const b = document.createElement('button');
-          b.type = 'button';
-          b.textContent = 'Reintentar';
-          b.addEventListener('click', () => ask(retryMessage, { retry: true }));
-          errorBox.append(b);
-        }
+      function showError(msg) {
+        errorBox.textContent = msg;
         errorBox.hidden = false;
       }
       function clearError() {
         errorBox.hidden = true;
         errorBox.textContent = '';
       }
+      const SEND_ICON = send.innerHTML;
+      const STOP_ICON =
+        '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2.5" /></svg>';
       function setBusy(value) {
         busy = value;
-        send.disabled = value;
+        send.innerHTML = value ? STOP_ICON : SEND_ICON;
+        send.classList.toggle('stop', value);
+        send.setAttribute('aria-label', value ? 'Detener la respuesta' : 'Enviar pregunta');
+        send.title = value ? 'Detener' : '';
         input.disabled = value;
         if (!value) input.focus();
       }
@@ -915,12 +926,14 @@ const suggestions = [
 
       function selectChat(id) {
         activeId = id;
+        failed = null;
         clearError();
         renderAll();
         dismissDrawer();
       }
       function newChat() {
         activeId = null;
+        failed = null;
         clearError();
         renderAll();
         dismissDrawer();
@@ -935,9 +948,11 @@ const suggestions = [
           setTimeout(r, ms);
         });
 
+      const CANCELLED = 'Respuesta cancelada.';
       async function ask(message, { retry = false } = {}) {
         if (busy) return;
         clearError();
+        failed = null;
 
         let chat = activeChat();
         if (!chat) {
@@ -982,7 +997,7 @@ const suggestions = [
               throw new Error('Tiempo agotado: el tutor no respondió en 2 minutos. Inténtalo de nuevo.');
             }
             await sleep(POLL_MS);
-            if (cancelled) throw new Error('Respuesta cancelada.');
+            if (cancelled) throw new Error(CANCELLED);
             const poll = await fetch(`/api/chat/${data.conversationId}`, { cache: 'no-store' });
             if (poll.status === 404) throw new Error('La conversación expiró. Vuelve a preguntar.');
             if (!poll.ok) throw new Error('Error al consultar la respuesta.');
@@ -995,7 +1010,9 @@ const suggestions = [
             }
           }
         } catch (err) {
-          showError(err instanceof TypeError ? 'Error de red. Revisa tu conexión.' : err.message, message);
+          const wasCancelled = err.message === CANCELLED;
+          failed = { chatId: chat.id, message, cancelled: wasCancelled };
+          if (!wasCancelled) showError(err instanceof TypeError ? 'Error de red. Revisa tu conexión.' : err.message);
         } finally {
           clearInterval(tick);
           pendingChatId = null;
@@ -1005,8 +1022,13 @@ const suggestions = [
       }
 
       // ---------- Eventos ----------
+      function stopWaiting() {
+        cancelled = true;
+        wake?.();
+      }
       form.addEventListener('submit', (e) => {
         e.preventDefault();
+        if (busy) return stopWaiting();
         const message = input.value.trim();
         if (message) ask(message);
       });
@@ -1041,7 +1063,8 @@ const suggestions = [
       $('close-side').addEventListener('click', closeSidebar);
       scrim.addEventListener('click', closeSidebar);
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && isMobile.matches) dismissDrawer();
+        if (e.key === 'Escape' && busy && !menuEl && !document.querySelector('dialog[open]')) stopWaiting();
+        else if (e.key === 'Escape' && isMobile.matches) dismissDrawer();
       });
       isMobile.addEventListener('change', () => {
         layout.classList.remove('side-open');
@@ -1456,12 +1479,13 @@ const suggestions = [
         transition: background-color .3s ease, color .3s ease, border-color .3s ease !important;
       }
 
-      .elapsed { font-variant-numeric: tabular-nums; opacity: .8; }
-      .cancel {
-        margin-left: 6px; padding: 3px 12px; border-radius: 999px; border: 1px solid var(--border); background: none;
-        color: var(--muted); cursor: pointer; font-size: 0.82rem;
+      .composer button.stop { background: var(--text); color: var(--bg); }
+      .retry-row { display: flex; align-items: center; gap: 8px; margin-top: -14px; font-size: 0.8rem; color: var(--muted); justify-content: flex-end; }
+      .retry-row button {
+        padding: 0; border: 0; background: none; color: var(--accent); cursor: pointer; font-size: 0.8rem; font-weight: 600;
       }
-      .cancel:hover { color: var(--text); background: var(--hover); }
+      .retry-row button:hover { text-decoration: underline; }
+      .elapsed { font-variant-numeric: tabular-nums; opacity: .8; }
       .error { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
       .error button {
         flex: none; padding: 5px 14px; border-radius: 999px; border: 1px solid currentColor; background: none;

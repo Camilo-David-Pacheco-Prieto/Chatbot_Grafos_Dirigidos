@@ -10,7 +10,7 @@ Chat web para un tutor académico de **grafos dirigidos (dígrafos)**. El navega
 - **Pie del menú lateral:** tema (sistema, claro, oscuro), exportar todo en JSON y borrar el historial.
 - **Respuestas del tutor:** fórmulas con KaTeX (`$…$`, `$$…$$`, `\(…\)`), tablas y matrices legibles, código con resaltado de sintaxis y botón de copiar.
 - **Ver grafo:** si la respuesta incluye un dígrafo reconocible (matriz de adyacencia cuadrada con las mismas etiquetas en filas y columnas, un conjunto de pares `A = {(a,b), …}` o flechas `a → b`), aparece el botón «Ver grafo» con un dibujo SVG descargable y los grados de entrada y salida. Si no se detecta nada, el botón no aparece.
-- **Espera:** tiempo transcurrido y botón «Cancelar» mientras se prepara la respuesta; tras un error, «Reintentar». Botón para ir al final en conversaciones largas.
+- **Espera:** tiempo transcurrido mientras se prepara la respuesta; el botón de enviar pasa a ser «Detener» (cuadrado) y, si se cancela o falla, aparece «Reintentar» bajo el mensaje. Botón para ir al final en conversaciones largas.
 - **Tema:** botón circular en la esquina superior derecha para alternar claro/oscuro al instante.
 - Todo lo anterior es solo presentación: no cambia el contrato de los endpoints ni el flujo con Zapier.
 
