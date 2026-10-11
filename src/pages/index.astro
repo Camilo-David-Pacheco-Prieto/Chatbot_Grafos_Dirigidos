@@ -873,8 +873,7 @@ const suggestions = [
         errorBox.textContent = '';
       }
       const SEND_ICON = send.innerHTML;
-      const STOP_ICON =
-        '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2.5" /></svg>';
+      const STOP_ICON = '';
       function setBusy(value) {
         busy = value;
         send.innerHTML = value ? STOP_ICON : SEND_ICON;
@@ -1488,7 +1487,7 @@ const suggestions = [
         transition: background-color .3s ease, color .3s ease, border-color .3s ease !important;
       }
 
-      .composer button.stop { background: var(--text); color: var(--bg); }
+      .composer button.stop { width: 32px; height: 32px; margin: 4px; border-radius: 10px; background: var(--accent); }
       .retry-row { display: flex; align-items: center; gap: 8px; margin-top: -14px; font-size: 0.8rem; color: var(--muted); justify-content: flex-end; }
       .retry-row button {
         padding: 0; border: 0; background: none; color: var(--accent); cursor: pointer; font-size: 0.8rem; font-weight: 600;
