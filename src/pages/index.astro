@@ -43,6 +43,7 @@ const suggestions = [
 
         <nav class="recents" aria-label="Recientes">
           <h2>Recientes</h2>
+          <input type="search" class="search-input" id="search-input" placeholder="Buscar conversaciones" aria-label="Buscar conversaciones" hidden />
           <ul id="chat-list"></ul>
           <p class="no-recents" id="no-recents">Tus conversaciones aparecerán aquí.</p>
         </nav>
@@ -50,6 +51,9 @@ const suggestions = [
         <footer class="side-foot">
           <span class="avatar" aria-hidden="true">CP</span>
           <span class="who"><strong>Camilo Pacheco</strong><small>Teoría de Grafos</small></span>
+          <button type="button" class="icon-btn" id="search-btn" aria-label="Buscar conversaciones" aria-expanded="false">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4 4" /></svg>
+          </button>
         </footer>
       </aside>
 
@@ -65,6 +69,7 @@ const suggestions = [
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
           </button>
         </header>
+        <p class="source-note"><span>Las respuestas se basan en el Capítulo 9 de <em>Graph Theory with Applications to Engineering and Computer Science</em></span></p>
 
         <main class="stage" id="stage" data-empty="true">
           <div class="thread-scroll" id="thread-scroll">
@@ -82,7 +87,7 @@ const suggestions = [
                 </g>
                 <g fill="currentColor"><circle cx="14" cy="49" r="5" /><circle cx="29" cy="19" r="5" /><circle cx="51" cy="40" r="5" /></g>
               </svg>
-              <span id="greeting">Hola</span>
+              <span id="greeting"><span class="g-hi" id="g-hi">Hola</span><span class="g-q">. ¿Qué grafo exploramos?</span></span>
             </h2>
           </section>
 
@@ -169,14 +174,33 @@ const suggestions = [
       function greet() {
         const h = new Date().getHours();
         const when = h < 6 ? 'Buenas noches' : h < 12 ? 'Buenos días' : h < 20 ? 'Buenas tardes' : 'Buenas noches';
-        $('greeting').textContent = `${when}`;
+        $('g-hi').textContent = when;
+      }
+
+      // ---------- Búsqueda ----------
+      let query = '';
+      const norm = (t) => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+      const searchInput = $('search-input');
+      const searchBtn = $('search-btn');
+      function toggleSearch(open = searchInput.hidden) {
+        searchInput.hidden = !open;
+        searchBtn.setAttribute('aria-expanded', String(open));
+        if (open) searchInput.focus();
+        else {
+          searchInput.value = '';
+          query = '';
+          renderList();
+        }
       }
 
       // ---------- Render ----------
       function renderList() {
         chatList.replaceChildren();
-        noRecents.hidden = chats.length > 0;
-        for (const c of chats) {
+        const q = norm(query);
+        const shown = q ? chats.filter((c) => norm(c.title).includes(q)) : chats;
+        noRecents.hidden = shown.length > 0;
+        noRecents.textContent = chats.length ? 'Sin resultados.' : 'Tus conversaciones aparecerán aquí.';
+        for (const c of shown) {
           const li = document.createElement('li');
           li.className = c.id === activeId ? 'active' : '';
           const open = document.createElement('button');
@@ -447,6 +471,14 @@ const suggestions = [
         btn.addEventListener('click', () => ask(btn.getAttribute('data-suggestion'))),
       );
       $('new-chat').addEventListener('click', newChat);
+      searchBtn.addEventListener('click', () => toggleSearch());
+      searchInput.addEventListener('input', () => {
+        query = searchInput.value;
+        renderList();
+      });
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') toggleSearch(false);
+      });
       $('new-chat-bar').addEventListener('click', newChat);
       $('open-side').addEventListener('click', openSidebar);
       $('close-side').addEventListener('click', closeSidebar);
@@ -560,6 +592,9 @@ const suggestions = [
       }
       .recents li:hover .del, .del:focus-visible { opacity: 1; }
       .del:hover { color: var(--danger); }
+      .search-input { width: calc(100% - 20px); margin: 0 10px 8px; padding: 8px 12px; font: inherit; font-size: 0.9rem; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 10px; outline: none; }
+      .search-input:focus { border-color: var(--accent); }
+      #search-btn { margin-left: auto; }
       .no-recents { margin: 8px 10px; color: var(--muted); font-size: 0.88rem; }
       .side-foot {
         display: flex; align-items: center; gap: 10px; padding: 10px 8px 2px; margin-top: 4px;
@@ -595,6 +630,8 @@ const suggestions = [
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       }
       .bar[data-empty='true'] .chat-title { visibility: hidden; }
+      .source-note { margin: 0; padding: 0 16px 6px; text-align: center; font-size: 0.74rem; line-height: 1.4; color: var(--muted); }
+      .source-note span { display: inline-block; max-width: 520px; padding: 4px 12px; border-radius: 10px; background: var(--hover); text-wrap: balance; }
       .stage {
         flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center;
         padding: 0 24px 16px;
@@ -727,6 +764,7 @@ const suggestions = [
         .stage[data-empty='true'] .suggestions { order: 2; margin: 0 auto auto; max-width: 360px; }
         .stage[data-empty='true'] .composer-wrap { order: 3; }
         .hero h2 { font-size: 2rem; }
+        .g-q { display: none; }
         .thread { gap: 24px; padding-top: 8px; }
         .msg.user .body { max-width: 88%; }
         .composer { padding-left: 18px; }
