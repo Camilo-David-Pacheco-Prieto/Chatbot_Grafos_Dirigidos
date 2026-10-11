@@ -32,8 +32,9 @@ pnpm start    # node dist/server/entry.mjs, escucha en 0.0.0.0:$PORT (carga .env
 ```
 astro.config.mjs          output 'server', adaptador node standalone, server.host:true (0.0.0.0)
 render.yaml               Blueprint de Render (variables con sync:false, sin valores)
-.env.example              plantilla de variables (ZAPIER_WEBHOOK_URL, CALLBACK_SECRET)
+.env.example              plantilla de variables (ZAPIER_WEBHOOK_URL, CALLBACK_SECRET, RATE_LIMIT_PER_MIN opcional)
 src/lib/env.js            getWebhookUrl(), getCallbackSecret(): lectura de variables (solo servidor)
+src/lib/rate-limit.js     límite de preguntas por IP (ventana de 60 s, en memoria; cf-connecting-ip, luego x-forwarded-for)
 src/lib/store.js          almacén en memoria con TTL de 30 min; único punto a cambiar para migrar a Redis
 src/pages/index.astro     toda la UI + <script> vanilla (chat, menú lateral con fijados/grupos/orden/búsqueda/exportar
                           y tema en localStorage [grafos-chat-v1, grafos-prefs-v1, grafos-side-collapsed],
@@ -50,7 +51,7 @@ src/pages/api/chat/[id].js        GET: estado de una conversación
 - Fijar, grupos, renombrar, orden y tema son **solo locales** (campos `pinned`, `group`, `renamed` en cada chat y `grafos-prefs-v1`); no tocan el backend ni el contrato. Mantén compatibles los datos antiguos de `localStorage`.
 - El pie mantiene el aviso de errores (en móvil solo ese, corto) y la nota de la fuente (Capítulo 9) en PC. La nota es informativa; no cambia lo que responde el agente.
 - Módulos de la interfaz: `src/scripts/render-math.js` (KaTeX; el HTML de las fórmulas se inserta tras DOMPurify) y `src/scripts/digraph.js` (detección y dibujo del dígrafo; devuelve `null` si no reconoce uno). Cancelar/Reintentar solo afectan al cliente (el servidor no se entera).
-- Versiones: `v1.0.0` = primera versión desplegada, `v2.0.0` = rediseño de la UI, `v3.0.0` = fórmulas KaTeX, visor de dígrafos y mejoras visuales, `v3.1.0` = botón Detener y Reintentar bajo el mensaje, `v3.1.3` = el botón Detener lleva un cuadrado blanco centrado dentro del cuadrado naranja, y el indicador de versión (abajo a la derecha) muestra solo `vX.Y.Z` tomada de `package.json`; `v3.1.2` = el botón Detener es un cuadrado naranja de esquinas suaves, `v3.1.1` = indicador de versión abajo a la derecha.
+- Versiones: `v1.0.0` = primera versión desplegada, `v2.0.0` = rediseño de la UI, `v3.0.0` = fórmulas KaTeX, visor de dígrafos y mejoras visuales, `v3.1.0` = botón Detener y Reintentar bajo el mensaje, `v3.1.4` = botón de enviar atenuado si la caja está vacía, límite de uso por IP (429), y menú de cuenta con Configuración (tema, tamaño de letra, orden/agrupación, exportar/importar/borrar), Ayuda y Más información; `v3.1.3` = el botón Detener lleva un cuadrado blanco centrado dentro del cuadrado naranja, y el indicador de versión (abajo a la derecha) muestra solo `vX.Y.Z` tomada de `package.json`; `v3.1.2` = el botón Detener es un cuadrado naranja de esquinas suaves, `v3.1.1` = indicador de versión abajo a la derecha.
 
 ## Contrato de los endpoints
 
@@ -61,6 +62,7 @@ Todos con `export const prerender = false`, respuestas JSON y `Cache-Control: no
 - **Efecto:** genera `conversationId` (`crypto.randomUUID()`), lo guarda como `pending` y hace `POST` JSON a `ZAPIER_WEBHOOK_URL` con `{ message, conversationId }` (timeout 15 s).
 - **Salida 200:** `{ "conversationId": string }`
 - **400:** JSON inválido, `message` no string, vacío o > 2000.
+- **429:** demasiadas preguntas desde la misma IP (`RATE_LIMIT_PER_MIN`, por defecto 10 por minuto; `0` lo desactiva). Incluye `Retry-After`. Solo se limita este endpoint, no el callback ni el polling.
 - **500:** falta `ZAPIER_WEBHOOK_URL` en el servidor.
 - **502:** Zapier falló, respondió no-2xx o hubo timeout (la conversación se elimina).
 

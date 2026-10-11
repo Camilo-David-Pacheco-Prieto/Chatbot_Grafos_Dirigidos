@@ -151,6 +151,61 @@ const suggestions = [
       </form>
     </dialog>
 
+    <dialog class="dlg settings-dlg" id="settings-dlg" aria-labelledby="settings-title">
+      <div class="set-head">
+        <h3 id="settings-title">Configuración</h3>
+        <button type="button" class="icon-btn small" id="settings-close" aria-label="Cerrar configuración">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+        </button>
+      </div>
+      <section class="set-sec">
+        <h4>Apariencia</h4>
+        <div class="set-row"><span>Tema</span>
+          <div class="seg" data-pref="theme">
+            <button type="button" data-v="system">Sistema</button><button type="button" data-v="light">Claro</button><button type="button" data-v="dark">Oscuro</button>
+          </div>
+        </div>
+        <div class="set-row"><span>Tamaño de letra</span>
+          <div class="seg" data-pref="fontSize">
+            <button type="button" data-v="small">Pequeña</button><button type="button" data-v="normal">Normal</button><button type="button" data-v="large">Grande</button>
+          </div>
+        </div>
+      </section>
+      <section class="set-sec">
+        <h4>Conversaciones</h4>
+        <div class="set-row"><span>Ordenar por</span>
+          <div class="seg" data-pref="sort">
+            <button type="button" data-v="recent">Recientes</button><button type="button" data-v="oldest">Antiguos</button><button type="button" data-v="alpha">A–Z</button>
+          </div>
+        </div>
+        <div class="set-row"><span>Agrupar por</span>
+          <div class="seg" data-pref="groupBy">
+            <button type="button" data-v="none">Nada</button><button type="button" data-v="date">Fecha</button><button type="button" data-v="custom">Grupos</button>
+          </div>
+        </div>
+      </section>
+      <section class="set-sec">
+        <h4>Datos</h4>
+        <div class="set-actions">
+          <button type="button" id="set-export">Exportar</button>
+          <button type="button" id="set-import">Importar</button>
+          <button type="button" id="set-clear" class="danger-btn">Borrar historial</button>
+        </div>
+        <input type="file" id="import-file" accept="application/json,.json" hidden />
+        <p class="set-note">El historial se guarda solo en este navegador (máximo 40 conversaciones).</p>
+      </section>
+    </dialog>
+
+    <dialog class="dlg info-dlg" id="info-dlg" aria-labelledby="info-title">
+      <div class="set-head">
+        <h3 id="info-title"></h3>
+        <button type="button" class="icon-btn small" id="info-close" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+        </button>
+      </div>
+      <div class="info-body" id="info-body"></div>
+    </dialog>
+
     <dialog class="dlg graph-dlg" id="graph-dlg">
       <h3>Dígrafo de la respuesta</h3>
       <div class="graph-box" id="graph-box"></div>
@@ -230,7 +285,7 @@ const suggestions = [
 
       // ---------- Preferencias de presentación (solo en este navegador) ----------
       const PREFS_KEY = 'grafos-prefs-v1';
-      const prefs = { sort: 'recent', groupBy: 'none', collapsed: {}, theme: 'system' };
+      const prefs = { sort: 'recent', groupBy: 'none', collapsed: {}, theme: 'system', fontSize: 'normal' };
       try {
         Object.assign(prefs, JSON.parse(localStorage.getItem(PREFS_KEY) || '{}'));
       } catch {}
@@ -278,6 +333,9 @@ const suggestions = [
         plus: '<path d="M12 5v14M5 12h14" />',
         sun: '<circle cx="12" cy="12" r="4" /><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4" />',
         moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" />',
+        settings: '<circle cx="12" cy="12" r="3" /><path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6" />',
+        help: '<circle cx="12" cy="12" r="9" /><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7M12 17h.01" />',
+        info: '<circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" />',
         graph: '<circle cx="6" cy="17" r="2.5" /><circle cx="18" cy="7" r="2.5" /><circle cx="18" cy="18" r="2.5" /><path d="M8 15.5 15.8 8.8M8.5 17.3H15.4" />',
       };
 
@@ -696,29 +754,6 @@ const suggestions = [
           { label: 'Mis grupos', checked: prefs.groupBy === 'custom', run: pick('groupBy', 'custom') },
         ];
       }
-      function userMenu() {
-        const theme = (v) => () => {
-          prefs.theme = v;
-          savePrefs();
-          applyTheme({ animate: true });
-        };
-        return [
-          { header: 'Tema' },
-          { label: 'Según el sistema', checked: prefs.theme === 'system', run: theme('system') },
-          { label: 'Claro', checked: prefs.theme === 'light', run: theme('light') },
-          { label: 'Oscuro', checked: prefs.theme === 'dark', run: theme('dark') },
-          '-',
-          {
-            label: 'Exportar todo (JSON)',
-            icon: I.down,
-            run: () => {
-              download('conversaciones-grafos.json', JSON.stringify(chats, null, 2), 'application/json');
-              toast('Historial exportado');
-            },
-          },
-          { label: 'Borrar todo el historial', icon: I.trash, danger: true, run: clearAll },
-        ];
-      }
       async function clearAll() {
         if (busy) {
           toast('Espera a que termine la respuesta.');
@@ -874,6 +909,9 @@ const suggestions = [
       const SEND_ICON = send.innerHTML;
       const STOP_ICON =
         '<svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><rect x="0" y="0" width="16" height="16" rx="3.5" /></svg>';
+      function syncSend() {
+        send.disabled = !busy && input.value.trim() === '';
+      }
       function setBusy(value) {
         busy = value;
         send.innerHTML = value ? STOP_ICON : SEND_ICON;
@@ -881,6 +919,7 @@ const suggestions = [
         send.setAttribute('aria-label', value ? 'Detener la respuesta' : 'Enviar pregunta');
         send.title = value ? 'Detener' : '';
         input.disabled = value;
+        syncSend();
         if (!value) input.focus();
       }
       function autosize() {
@@ -889,6 +928,7 @@ const suggestions = [
         input.style.overflowY = input.scrollHeight > 200 ? 'auto' : 'hidden';
         const n = input.value.length;
         count.textContent = n > 1500 ? `${n}/2000` : '';
+        syncSend();
       }
 
       // Barra lateral: en móvil es un panel superpuesto; en escritorio se colapsa.
@@ -1067,6 +1107,11 @@ const suggestions = [
       $('close-side').addEventListener('click', closeSidebar);
       scrim.addEventListener('click', closeSidebar);
       document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.code === 'Comma') {
+          e.preventDefault();
+          openSettings();
+          return;
+        }
         if (e.key === 'Escape' && busy && !menuEl && !document.querySelector('dialog[open]')) stopWaiting();
         else if (e.key === 'Escape' && isMobile.matches) dismissDrawer();
       });
@@ -1092,6 +1137,138 @@ const suggestions = [
       });
       darkQuery.addEventListener('change', syncThemeBtn);
 
+      // ---------- Configuración, ayuda e información ----------
+      const settingsDlg = $('settings-dlg');
+      const infoDlg = $('info-dlg');
+      const importFile = $('import-file');
+
+      function applyFont() {
+        document.documentElement.dataset.fs = prefs.fontSize || 'normal';
+      }
+      function syncSegs() {
+        settingsDlg.querySelectorAll('.seg').forEach((seg) => {
+          const key = seg.dataset.pref;
+          seg.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(prefs[key] === b.dataset.v)));
+        });
+      }
+      function openSettings() {
+        closeMenu();
+        syncSegs();
+        if (!settingsDlg.open) settingsDlg.showModal();
+      }
+      settingsDlg.querySelectorAll('.seg button').forEach((b) =>
+        b.addEventListener('click', () => {
+          const key = b.parentElement.dataset.pref;
+          prefs[key] = b.dataset.v;
+          savePrefs();
+          if (key === 'theme') applyTheme({ animate: true });
+          else if (key === 'fontSize') applyFont();
+          else renderList();
+          syncSegs();
+        }),
+      );
+      $('settings-close').addEventListener('click', () => settingsDlg.close());
+
+      function exportAll() {
+        if (!chats.length) return toast('No hay conversaciones para exportar.');
+        download('conversaciones-grafos.json', JSON.stringify(chats, null, 2), 'application/json');
+        toast('Historial exportado');
+      }
+      // Valida cada elemento y reconstruye el objeto: nunca se copia el JSON tal cual.
+      function cleanChat(c) {
+        if (!c || typeof c.id !== 'string' || typeof c.title !== 'string' || !Array.isArray(c.messages)) return null;
+        const messages = c.messages
+          .filter((m) => m && (m.role === 'user' || m.role === 'agent') && typeof m.text === 'string')
+          .map((m) => ({ role: m.role, text: m.text }));
+        return {
+          id: c.id.slice(0, 64),
+          title: c.title.slice(0, 80) || 'Sin título',
+          messages,
+          updated: Number.isFinite(c.updated) ? c.updated : Date.now(),
+          pinned: c.pinned === true,
+          group: typeof c.group === 'string' ? c.group.slice(0, 40) : null,
+          renamed: c.renamed === true,
+        };
+      }
+      async function importChats(file) {
+        try {
+          const data = JSON.parse(await file.text());
+          if (!Array.isArray(data)) throw new Error('formato');
+          const known = new Set(chats.map((c) => c.id));
+          const fresh = data.map(cleanChat).filter((c) => c && !known.has(c.id));
+          if (!fresh.length) return toast('No hay conversaciones nuevas para importar.');
+          chats = [...chats, ...fresh].sort(byRecent).slice(0, MAX_CHATS);
+          persist();
+          renderAll();
+          toast(`Importadas ${fresh.length} conversaciones`);
+        } catch {
+          toast('El archivo no es un historial válido.');
+        }
+      }
+      $('set-export').addEventListener('click', exportAll);
+      $('set-import').addEventListener('click', () => importFile.click());
+      importFile.addEventListener('change', () => {
+        const f = importFile.files?.[0];
+        importFile.value = '';
+        if (f) importChats(f);
+      });
+      $('set-clear').addEventListener('click', async () => {
+        settingsDlg.close();
+        await clearAll();
+      });
+
+      const HELP_HTML = `
+        <h4>Cómo usar el tutor</h4>
+        <ul>
+          <li>Escribe una pregunta sobre grafos dirigidos o pulsa una sugerencia. <kbd>Enter</kbd> envía y <kbd>Shift</kbd>+<kbd>Enter</kbd> hace un salto de línea.</li>
+          <li>Mientras espera, el botón de enviar se convierte en <strong>Detener</strong>. Si se cancela o falla, aparece «Reintentar» bajo tu mensaje.</li>
+          <li>Si la respuesta incluye una matriz de adyacencia, un conjunto de pares como <code>A = {(a,b), (b,c)}</code> o flechas <code>a → b</code>, aparece <strong>Ver grafo</strong>. Prueba con: «Representa un dígrafo de 4 vértices con su matriz de adyacencia».</li>
+          <li>Tus conversaciones se guardan solo en este navegador. Puedes fijarlas, agruparlas, renombrarlas, exportarlas e importarlas.</li>
+        </ul>`;
+      const KEYS_HTML = `
+        <h4>Atajos de teclado</h4>
+        <ul class="keys">
+          <li><kbd>Enter</kbd> Enviar la pregunta</li>
+          <li><kbd>Shift</kbd>+<kbd>Enter</kbd> Salto de línea</li>
+          <li><kbd>Esc</kbd> Detener la respuesta, cerrar menús y diálogos</li>
+          <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>,</kbd> Abrir Configuración</li>
+          <li><kbd>P</kbd> <kbd>R</kbd> <kbd>D</kbd> En el menú de una conversación: fijar, cambiar nombre, eliminar</li>
+        </ul>`;
+      function aboutHtml() {
+        const v = document.querySelector('.ver')?.textContent ?? '';
+        return `
+        <h4>Tutor de grafos dirigidos</h4>
+        <ul>
+          <li>Versión ${v}.</li>
+          <li>Las respuestas se basan en el Capítulo 9 de <em>Graph Theory with Applications to Engineering and Computer Science</em>. Es una referencia informativa; el contenido lo define el agente.</li>
+          <li>El tutor puede cometer errores: verifica lo importante.</li>
+          <li>Hecho por Camilo Pacheco para Teoría de Grafos.</li>
+        </ul>`;
+      }
+      function showInfo(title, html) {
+        closeMenu();
+        $('info-title').textContent = title;
+        $('info-body').innerHTML = html;
+        if (!infoDlg.open) infoDlg.showModal();
+      }
+      $('info-close').addEventListener('click', () => infoDlg.close());
+
+      function userMenu() {
+        return [
+          { label: 'Configuración', icon: I.settings, key: 'Ctrl+Shift+,', run: openSettings },
+          { label: 'Obtener ayuda', icon: I.help, run: () => showInfo('Ayuda', HELP_HTML) },
+          '-',
+          {
+            label: 'Más información',
+            icon: I.info,
+            sub: [
+              { label: 'Acerca de', icon: I.info, run: () => showInfo('Acerca de', aboutHtml()) },
+              { label: 'Atajos de teclado', icon: I.help, run: () => showInfo('Atajos de teclado', KEYS_HTML) },
+            ],
+          },
+        ];
+      }
+
       // ---------- Visor de dígrafo (solo si la respuesta trae uno reconocible) ----------
       const graphDlg = $('graph-dlg');
       let graphSvg = '';
@@ -1115,6 +1292,7 @@ const suggestions = [
         if (localStorage.getItem(SIDE_KEY)) layout.classList.add('side-collapsed');
       } catch {}
       applyTheme();
+      applyFont();
       greet();
       syncSide();
       renderAll();
@@ -1528,6 +1706,33 @@ const suggestions = [
       .graph-sum { font-size: 0.85rem; line-height: 1.5; }
       .dlg-actions .primary { background: var(--accent); border-color: transparent; color: #fff; }
       .dlg-actions .primary:hover { background: var(--accent); filter: brightness(1.1); }
+
+
+      /* ---------- Configuración y ayuda ---------- */
+      :root[data-fs='small'] .thread { font-size: 0.92rem; }
+      :root[data-fs='large'] .thread { font-size: 1.1rem; }
+      .settings-dlg, .info-dlg { width: min(520px, 94vw); max-height: 88dvh; overflow: auto; }
+      .set-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+      .set-head h3 { margin: 0; }
+      .set-sec { padding: 12px 0; border-top: 1px solid var(--border); }
+      .set-sec h4, .info-body h4 { margin: 0 0 8px; font-size: 0.82rem; font-weight: 500; color: var(--muted); }
+      .set-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; font-size: 0.93rem; }
+      .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+      .seg button { padding: 6px 12px; border: 0; border-right: 1px solid var(--border); background: none; cursor: pointer; font-size: 0.85rem; color: var(--muted); }
+      .seg button:last-child { border-right: 0; }
+      .seg button:hover { background: var(--hover); color: var(--text); }
+      .seg button[aria-pressed='true'] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+      .set-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+      .set-actions button { padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border); background: none; cursor: pointer; font-size: 0.88rem; }
+      .set-actions button:hover { background: var(--hover); }
+      .set-actions .danger-btn { color: var(--danger); }
+      .set-note { margin: 10px 0 0; font-size: 0.8rem; }
+      .info-body { font-size: 0.93rem; line-height: 1.6; }
+      .info-body ul { margin: 0; padding-left: 1.2em; }
+      .info-body li { margin: 0.4em 0; }
+      .info-body ul.keys { list-style: none; padding: 0; }
+      .info-body code { font: 0.88em ui-monospace, Consolas, monospace; background: var(--hover); padding: 1px 5px; border-radius: 5px; }
+      kbd { font: 0.82em ui-monospace, Consolas, monospace; padding: 1px 6px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 6px; background: var(--bg); }
 
       @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
       @keyframes pulse { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }

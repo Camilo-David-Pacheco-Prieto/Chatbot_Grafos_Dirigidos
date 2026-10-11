@@ -12,7 +12,8 @@ Chat web para un tutor académico de **grafos dirigidos (dígrafos)**. El navega
 - **Ver grafo:** si la respuesta incluye un dígrafo reconocible (matriz de adyacencia cuadrada con las mismas etiquetas en filas y columnas, un conjunto de pares `A = {(a,b), …}` o flechas `a → b`), aparece el botón «Ver grafo» con un dibujo SVG descargable y los grados de entrada y salida. Si no se detecta nada, el botón no aparece.
 - **Espera:** tiempo transcurrido mientras se prepara la respuesta; el botón de enviar pasa a ser «Detener» (cuadrado) y, si se cancela o falla, aparece «Reintentar» bajo el mensaje. Botón para ir al final en conversaciones largas.
 - **Tema:** botón circular en la esquina superior derecha para alternar claro/oscuro al instante.
-- Todo lo anterior es solo presentación: no cambia el contrato de los endpoints ni el flujo con Zapier.
+- **Menú del nombre (pie del menú lateral):** *Configuración* (también `Ctrl+Shift+,`: tema, tamaño de letra, orden y agrupación, exportar, importar y borrar el historial), *Obtener ayuda* y *Más información* (Acerca de y atajos de teclado). El botón de enviar se atenúa mientras la caja está vacía.
+- Salvo el límite de uso, todo lo anterior es solo presentación y no cambia el flujo con Zapier. **Límite de uso:** `POST /api/chat` admite 10 preguntas por minuto y por IP (responde 429 con un mensaje en español); se ajusta con `RATE_LIMIT_PER_MIN` (`0` lo desactiva). Es en memoria: se reinicia con el servicio.
 
 ## Arquitectura
 
@@ -57,6 +58,7 @@ La URL del webhook y el secreto **solo se leen en el servidor**; nunca llegan al
 |---|---|
 | `ZAPIER_WEBHOOK_URL` | URL del *Catch Hook* de Zapier (`<TU-WEBHOOK>`). |
 | `CALLBACK_SECRET` | Clave compartida que Zapier envía en el header `x-callback-secret` (`<CLAVE>`). |
+| `RATE_LIMIT_PER_MIN` | (Opcional) Preguntas por minuto y por IP en `/api/chat`; por defecto 10, `0` desactiva el límite. |
 | `PORT` | Puerto de escucha (por defecto 4321; Render lo define solo). |
 
 Genera una `CALLBACK_SECRET` nueva (48 caracteres hexadecimales):
