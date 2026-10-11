@@ -124,7 +124,7 @@ const suggestions = [
           </div>
         </main>
         <footer class="foot">
-          <p class="foot-ai"><span class="hide-m">El tutor puede</span><span class="show-m">Puede</span> cometer errores. Verifica lo importante.</p>
+          <p class="foot-ai">El tutor puede cometer errores. Verifica lo importante.</p>
           <p class="foot-src">Las respuestas se basan en el Capítulo 9 de <em>Graph Theory with Applications to Engineering and Computer Science</em>.</p>
         </footer>
       </div>
@@ -1192,6 +1192,7 @@ const suggestions = [
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       }
       .bar[data-empty='true'] .chat-title { visibility: hidden; }
+      .bar[data-empty='false'] .chat-title { color: var(--text); }
       .stage {
         flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center;
         padding: 0 24px 16px;
@@ -1285,7 +1286,6 @@ const suggestions = [
       .composer button:disabled, .composer textarea:disabled { opacity: .5; cursor: not-allowed; }
       .foot { padding: 6px 16px calc(10px + env(safe-area-inset-bottom)); text-align: center; color: var(--muted); font-size: 0.74rem; line-height: 1.45; }
       .foot p { margin: 0; text-wrap: balance; }
-      .show-m { display: none; }
 
       /* Sugerencias */
       .suggestions {
@@ -1329,10 +1329,8 @@ const suggestions = [
         .thread { gap: 24px; padding-top: 8px; }
         .msg.user .body { max-width: 88%; }
         .composer { padding-left: 18px; }
-        .hide-m { display: none; }
-        .show-m { display: inline; }
         .foot-src { display: none; }
-        .foot { padding-top: 2px; font-size: 0.7rem; }
+        .foot { padding-top: 2px; font-size: 0.72rem; }
         .sugg { padding: 9px 12px 9px 10px; font-size: 0.9rem; white-space: nowrap; background: var(--surface); border-color: transparent; }
       }
     </style>
