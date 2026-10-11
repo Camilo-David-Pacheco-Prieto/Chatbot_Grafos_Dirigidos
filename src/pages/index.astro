@@ -5,6 +5,7 @@ const suggestions = [
   { icon: 'mat', label: 'Matriz de adyacencia', title: '¿Cómo se representa un dígrafo con la matriz de adyacencia?' },
   { icon: 'tor', label: 'Torneo', title: '¿Qué es un torneo?' },
   { icon: 'deg', label: 'Grados de entrada y salida', title: '¿Qué son el grado de entrada y el grado de salida de un vértice?' },
+  { icon: 'cam', label: 'Caminos y ciclos', title: '¿Qué es un camino dirigido y qué es un ciclo en un dígrafo?' },
 ];
 ---
 
@@ -47,8 +48,8 @@ const suggestions = [
         </nav>
 
         <footer class="side-foot">
-          <span class="avatar" aria-hidden="true">G</span>
-          <span>Tutor de grafos dirigidos</span>
+          <span class="avatar" aria-hidden="true">CP</span>
+          <span class="who"><strong>Camilo Pacheco</strong><small>Teoría de Grafos</small></span>
         </footer>
       </aside>
 
@@ -105,6 +106,7 @@ const suggestions = [
                   {s.icon === 'dig' && <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="17" r="2.5" /><circle cx="18" cy="7" r="2.5" /><path d="M8 15.5 L15.5 8.8M15.5 8.8h-4M15.5 8.8v4" /></svg>}
                   {s.icon === 'mat' && <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" /><path d="M4 12h16M12 4v16" /></svg>}
                   {s.icon === 'tor' && <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18 L8 8 L12 14 L16 8 L20 18 Z" /></svg>}
+                  {s.icon === 'cam' && <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="5.5" r="2" /><circle cx="19" cy="12" r="2" /><circle cx="12" cy="18.5" r="2" /><path d="M6.5 10.6 10.5 7M13.5 7 17.5 10.6M17.5 13.4 13.5 17M10.5 17 6.5 13.4" /></svg>}
                   {s.icon === 'deg' && <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" /><path d="M3 12h6M6.5 9.5 9 12l-2.5 2.5M15 12h6M18.5 9.5 21 12l-2.5 2.5" /></svg>}
                 </span>
                 <span>{s.label}</span>
@@ -562,6 +564,9 @@ const suggestions = [
         display: flex; align-items: center; gap: 10px; padding: 10px 8px 2px; margin-top: 4px;
         border-top: 1px solid var(--border); color: var(--muted); font-size: 0.86rem;
       }
+      .who { display: flex; flex-direction: column; line-height: 1.3; min-width: 0; }
+      .who strong { color: var(--text); font-weight: 500; }
+      .who small { font-size: 0.78rem; }
       .avatar {
         width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
         background: var(--accent-soft); color: var(--accent); font-weight: 600; font-size: 0.8rem;
@@ -725,7 +730,9 @@ const suggestions = [
         .msg.user .body { max-width: 88%; }
         .composer { padding-left: 18px; }
         .disclaimer { margin-top: 6px; font-size: 0.7rem; }
-        .sugg { padding: 8px 12px 8px 10px; font-size: 0.88rem; }
+        .suggestions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .sugg { justify-content: center; text-align: center; padding: 10px 10px; font-size: 0.88rem; min-height: 48px; }
+        .sugg:last-child:nth-child(odd) { grid-column: 1 / -1; }
       }
     </style>
   </body>
