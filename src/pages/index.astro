@@ -1,5 +1,9 @@
 ---
+import pkg from '../../package.json';
+import { getCommit } from '../lib/env.js';
+
 export const prerender = false;
+const version = `v${pkg.version} · ${getCommit() || 'local'}`;
 const suggestions = [
   { icon: 'dig', label: 'Dígrafo', title: '¿Qué es un dígrafo?' },
   { icon: 'mat', label: 'Matriz', title: '¿Cómo se representa un dígrafo con la matriz de adyacencia?' },
@@ -62,6 +66,7 @@ const suggestions = [
         </footer>
       </aside>
 
+      <span class="ver" title="Versión desplegada">{version}</span>
       <div class="scrim" id="scrim" hidden></div>
 
       <div class="main">
@@ -1436,7 +1441,11 @@ const suggestions = [
       }
       .composer button:hover:not(:disabled) { filter: brightness(1.1); }
       .composer button:disabled, .composer textarea:disabled { opacity: .5; cursor: not-allowed; }
-      .foot { padding: 6px 16px calc(10px + env(safe-area-inset-bottom)); text-align: center; color: var(--muted); font-size: 0.74rem; line-height: 1.45; }
+      .ver {
+        position: fixed; right: 12px; bottom: 4px; z-index: 5; font-size: 0.64rem; line-height: 1;
+        color: var(--muted); opacity: .7; pointer-events: none;
+      }
+      .foot { padding: 6px 16px calc(18px + env(safe-area-inset-bottom)); text-align: center; color: var(--muted); font-size: 0.74rem; line-height: 1.45; }
       .foot p { margin: 0; text-wrap: balance; }
 
       /* Sugerencias */
@@ -1555,6 +1564,7 @@ const suggestions = [
         .composer { padding-left: 18px; }
         .foot-src { display: none; }
         .foot { padding-top: 2px; font-size: 0.72rem; }
+        .ver { right: 10px; bottom: calc(3px + env(safe-area-inset-bottom)); }
         .sugg { padding: 9px 12px 9px 10px; font-size: 0.9rem; white-space: nowrap; background: var(--surface); border-color: transparent; }
       }
     </style>
