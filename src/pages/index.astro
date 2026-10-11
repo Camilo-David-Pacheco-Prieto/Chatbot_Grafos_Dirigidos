@@ -74,11 +74,15 @@ const suggestions = [
           <button type="button" class="icon-btn only-mobile" id="new-chat-bar" aria-label="Nueva conversación">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
           </button>
+          <button type="button" class="theme-btn" id="theme-btn" aria-label="Cambiar tema"></button>
         </header>
 
         <main class="stage" id="stage" data-empty="true">
           <div class="thread-scroll" id="thread-scroll">
             <div class="thread" id="thread" role="log" aria-live="polite" aria-label="Conversación" tabindex="0"></div>
+            <button type="button" class="to-bottom" id="to-bottom" aria-label="Ir al final de la conversación" hidden>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6" /></svg>
+            </button>
           </div>
 
           <section class="hero" id="hero">
@@ -143,9 +147,30 @@ const suggestions = [
       </form>
     </dialog>
 
+    <dialog class="dlg graph-dlg" id="graph-dlg">
+      <h3>Dígrafo de la respuesta</h3>
+      <div class="graph-box" id="graph-box"></div>
+      <p class="graph-sum" id="graph-sum"></p>
+      <div class="dlg-actions">
+        <button type="button" id="graph-save">Descargar SVG</button>
+        <button type="button" id="graph-close" class="primary">Cerrar</button>
+      </div>
+    </dialog>
+
     <script>
       import { marked } from 'marked';
       import DOMPurify from 'dompurify';
+      import hljs from 'highlight.js/lib/core';
+      import python from 'highlight.js/lib/languages/python';
+      import javascript from 'highlight.js/lib/languages/javascript';
+      import json from 'highlight.js/lib/languages/json';
+      import bash from 'highlight.js/lib/languages/bash';
+      import cpp from 'highlight.js/lib/languages/cpp';
+      import java from 'highlight.js/lib/languages/java';
+      import { extractMath } from '../scripts/render-math.js';
+      import { findGraph, drawGraph, degrees } from '../scripts/digraph.js';
+
+      for (const [name, lang] of Object.entries({ python, javascript, json, bash, cpp, java })) hljs.registerLanguage(name, lang);
 
       const POLL_MS = 2000;
       const MAX_WAIT_MS = 120_000;
@@ -210,9 +235,24 @@ const suggestions = [
           localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
         } catch {}
       }
-      function applyTheme() {
-        if (prefs.theme === 'light' || prefs.theme === 'dark') document.documentElement.dataset.theme = prefs.theme;
-        else document.documentElement.removeAttribute('data-theme');
+      const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const isDark = () => prefs.theme === 'dark' || (prefs.theme === 'system' && darkQuery.matches);
+      function applyTheme({ animate = false } = {}) {
+        const root = document.documentElement;
+        if (animate) {
+          root.classList.add('theme-anim');
+          setTimeout(() => root.classList.remove('theme-anim'), 350);
+        }
+        if (prefs.theme === 'light' || prefs.theme === 'dark') root.dataset.theme = prefs.theme;
+        else root.removeAttribute('data-theme');
+        syncThemeBtn();
+      }
+      function syncThemeBtn() {
+        const btn = $('theme-btn');
+        const dark = isDark();
+        btn.innerHTML = dark ? ico(I.sun, 17) : ico(I.moon, 17);
+        btn.setAttribute('aria-label', dark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro');
+        btn.title = dark ? 'Tema claro' : 'Tema oscuro';
       }
 
       // ---------- Íconos ----------
@@ -231,6 +271,9 @@ const suggestions = [
         chevron: '<path d="m8 10 4 4 4-4" />',
         back: '<path d="m14 7-5 5 5 5" />',
         plus: '<path d="M12 5v14M5 12h14" />',
+        sun: '<circle cx="12" cy="12" r="4" /><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4" />',
+        moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" />',
+        graph: '<circle cx="6" cy="17" r="2.5" /><circle cx="18" cy="7" r="2.5" /><circle cx="18" cy="18" r="2.5" /><path d="M8 15.5 15.8 8.8M8.5 17.3H15.4" />',
       };
 
       // ---------- Avisos y diálogos ----------
@@ -652,7 +695,7 @@ const suggestions = [
         const theme = (v) => () => {
           prefs.theme = v;
           savePrefs();
-          applyTheme();
+          applyTheme({ animate: true });
         };
         return [
           { header: 'Tema' },
@@ -720,7 +763,17 @@ const suggestions = [
         } else {
           const md = document.createElement('div');
           md.className = 'md';
-          md.innerHTML = DOMPurify.sanitize(marked.parse(text));
+          const math = extractMath(text);
+          md.innerHTML = math.restore(DOMPurify.sanitize(marked.parse(math.text)));
+          md.querySelectorAll('table').forEach((t) => {
+            const wrap = document.createElement('div');
+            wrap.className = 'table-wrap';
+            t.replaceWith(wrap);
+            wrap.append(t);
+            const cells = [...t.querySelectorAll('tbody td')];
+            if (cells.length && cells.every((c) => /^[\d\s.,∞-]+$/.test(c.textContent))) t.classList.add('numeric');
+          });
+          md.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
           md.querySelectorAll('a').forEach((a) => {
             a.target = '_blank';
             a.rel = 'noopener noreferrer';
@@ -744,6 +797,15 @@ const suggestions = [
           cp.innerHTML = COPY_ICON;
           cp.addEventListener('click', () => copyText(cp, text));
           actions.append(cp);
+          const graph = findGraph(text, md);
+          if (graph) {
+            const gb = document.createElement('button');
+            gb.type = 'button';
+            gb.className = 'copy';
+            gb.innerHTML = `${ico(I.graph, 15)}<span>Ver grafo</span>`;
+            gb.addEventListener('click', () => openGraph(graph));
+            actions.append(gb);
+          }
           body.append(actions);
         }
         row.append(body);
@@ -755,7 +817,11 @@ const suggestions = [
         row.className = 'msg agent';
         row.id = 'typing';
         row.innerHTML =
-          '<div class="body typing"><svg class="mini-spark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="17" r="2.4"/><circle cx="12" cy="6" r="2.4"/><circle cx="19" cy="15" r="2.4"/></svg><span>Preparando la respuesta</span></div>';
+          '<div class="body typing"><svg class="mini-spark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="17" r="2.4"/><circle cx="12" cy="6" r="2.4"/><circle cx="19" cy="15" r="2.4"/></svg><span>Preparando la respuesta</span><span class="elapsed" id="elapsed"></span><button type="button" class="cancel" id="cancel-wait">Cancelar</button></div>';
+        row.querySelector('#cancel-wait').addEventListener('click', () => {
+          cancelled = true;
+          wake?.();
+        });
         return row;
       }
 
@@ -781,8 +847,15 @@ const suggestions = [
       }
 
       // ---------- UI helpers ----------
-      function showError(msg) {
-        errorBox.textContent = msg;
+      function showError(msg, retryMessage) {
+        errorBox.replaceChildren(document.createTextNode(msg));
+        if (retryMessage) {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.textContent = 'Reintentar';
+          b.addEventListener('click', () => ask(retryMessage, { retry: true }));
+          errorBox.append(b);
+        }
         errorBox.hidden = false;
       }
       function clearError() {
@@ -854,9 +927,15 @@ const suggestions = [
         input.focus();
       }
       // ---------- Envío ----------
-      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+      let cancelled = false;
+      let wake = null;
+      const sleep = (ms) =>
+        new Promise((r) => {
+          wake = r;
+          setTimeout(r, ms);
+        });
 
-      async function ask(message) {
+      async function ask(message, { retry = false } = {}) {
         if (busy) return;
         clearError();
 
@@ -871,10 +950,17 @@ const suggestions = [
           chats.unshift(chat);
           activeId = chat.id;
         }
-        chat.messages.push({ role: 'user', text: message });
+        const last = chat.messages.at(-1);
+        if (!(retry && last?.role === 'user' && last.text === message)) chat.messages.push({ role: 'user', text: message });
         chat.updated = Date.now();
         persist();
 
+        cancelled = false;
+        const startedAt = Date.now();
+        const tick = setInterval(() => {
+          const el = document.getElementById('elapsed');
+          if (el) el.textContent = `· ${Math.round((Date.now() - startedAt) / 1000)} s`;
+        }, 1000);
         pendingChatId = chat.id;
         setBusy(true);
         input.value = '';
@@ -896,6 +982,7 @@ const suggestions = [
               throw new Error('Tiempo agotado: el tutor no respondió en 2 minutos. Inténtalo de nuevo.');
             }
             await sleep(POLL_MS);
+            if (cancelled) throw new Error('Respuesta cancelada.');
             const poll = await fetch(`/api/chat/${data.conversationId}`, { cache: 'no-store' });
             if (poll.status === 404) throw new Error('La conversación expiró. Vuelve a preguntar.');
             if (!poll.ok) throw new Error('Error al consultar la respuesta.');
@@ -908,8 +995,9 @@ const suggestions = [
             }
           }
         } catch (err) {
-          showError(err instanceof TypeError ? 'Error de red. Revisa tu conexión.' : err.message);
+          showError(err instanceof TypeError ? 'Error de red. Revisa tu conexión.' : err.message, message);
         } finally {
+          clearInterval(tick);
           pendingChatId = null;
           setBusy(false);
           renderAll();
@@ -959,8 +1047,41 @@ const suggestions = [
         layout.classList.remove('side-open');
         syncSide();
       });
+      const toBottom = $('to-bottom');
       threadScroll.addEventListener('scroll', () => {
         bar.classList.toggle('scrolled', threadScroll.scrollTop > 4);
+        const gap = threadScroll.scrollHeight - threadScroll.scrollTop - threadScroll.clientHeight;
+        toBottom.hidden = gap < 240;
+      });
+      toBottom.addEventListener('click', scrollDown);
+
+      $('theme-btn').addEventListener('click', (e) => {
+        prefs.theme = isDark() ? 'light' : 'dark';
+        savePrefs();
+        applyTheme({ animate: true });
+        e.currentTarget.classList.remove('spin');
+        void e.currentTarget.offsetWidth;
+        e.currentTarget.classList.add('spin');
+      });
+      darkQuery.addEventListener('change', syncThemeBtn);
+
+      // ---------- Visor de dígrafo (solo si la respuesta trae uno reconocible) ----------
+      const graphDlg = $('graph-dlg');
+      let graphSvg = '';
+      function openGraph(g) {
+        graphSvg = drawGraph(g);
+        $('graph-box').innerHTML = graphSvg;
+        const d = degrees(g);
+        $('graph-sum').textContent =
+          `${g.nodes.length} vértices, ${g.edges.length} arcos. Grado de salida / entrada: ` +
+          d.map((x) => `${x.name}: ${x.out}/${x.in}`).join(' · ');
+        graphDlg.showModal();
+      }
+      $('graph-close').addEventListener('click', () => graphDlg.close());
+      $('graph-save').addEventListener('click', () => {
+        const css = getComputedStyle(document.documentElement);
+        const svg = graphSvg.replace(/var\((--[\w-]+)\)/g, (m, v) => css.getPropertyValue(v).trim() || '#000');
+        download('digrafo.svg', svg.replace('<svg ', '<svg style="background:' + css.getPropertyValue('--bg').trim() + '" '), 'image/svg+xml');
       });
 
       try {
@@ -1308,6 +1429,74 @@ const suggestions = [
       .sugg:hover { background: var(--surface); border-color: color-mix(in srgb, var(--accent) 50%, var(--border)); }
       .sicon { display: grid; place-items: center; color: var(--muted); }
       .sugg:hover .sicon { color: var(--accent); }
+
+
+      /* ---------- Tema, espera, tablas, código, fórmulas y visor de grafo ---------- */
+      :root { --hl-kw: #a8452a; --hl-str: #4f7a3a; --hl-num: #8a5a00; --hl-com: #8a877d; --hl-fn: #2a62a8; }
+      @media (prefers-color-scheme: dark) {
+        :root { --hl-kw: #e8896a; --hl-str: #9bc27f; --hl-num: #e0b45c; --hl-com: #86837a; --hl-fn: #7fb1ee; }
+      }
+      :root[data-theme='light'] { --hl-kw: #a8452a; --hl-str: #4f7a3a; --hl-num: #8a5a00; --hl-com: #8a877d; --hl-fn: #2a62a8; }
+      :root[data-theme='dark'] { --hl-kw: #e8896a; --hl-str: #9bc27f; --hl-num: #e0b45c; --hl-com: #86837a; --hl-fn: #7fb1ee; }
+      .hljs-keyword, .hljs-literal, .hljs-built_in, .hljs-selector-tag { color: var(--hl-kw); }
+      .hljs-string, .hljs-regexp, .hljs-attr { color: var(--hl-str); }
+      .hljs-number, .hljs-symbol, .hljs-meta { color: var(--hl-num); }
+      .hljs-comment, .hljs-quote { color: var(--hl-com); font-style: italic; }
+      .hljs-title, .hljs-function, .hljs-name, .hljs-section { color: var(--hl-fn); }
+
+      .theme-btn {
+        flex: none; margin-left: auto; width: 32px; height: 32px; display: grid; place-items: center; cursor: pointer;
+        border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--muted);
+        transition: color .15s, border-color .15s;
+      }
+      .theme-btn:hover { color: var(--text); border-color: var(--muted); }
+      #new-chat-bar + .theme-btn { margin-left: 4px; }
+      .theme-btn.spin svg { animation: spin .5s ease; }
+      @keyframes spin { from { transform: rotate(-90deg) scale(.6); opacity: .3; } to { transform: none; opacity: 1; } }
+      html.theme-anim, html.theme-anim *, html.theme-anim *::before, html.theme-anim *::after {
+        transition: background-color .3s ease, color .3s ease, border-color .3s ease !important;
+      }
+
+      .elapsed { font-variant-numeric: tabular-nums; opacity: .8; }
+      .cancel {
+        margin-left: 6px; padding: 3px 12px; border-radius: 999px; border: 1px solid var(--border); background: none;
+        color: var(--muted); cursor: pointer; font-size: 0.82rem;
+      }
+      .cancel:hover { color: var(--text); background: var(--hover); }
+      .error { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+      .error button {
+        flex: none; padding: 5px 14px; border-radius: 999px; border: 1px solid currentColor; background: none;
+        color: inherit; cursor: pointer; font-size: 0.85rem; font-weight: 600;
+      }
+      .error[hidden] { display: none; }
+
+      .to-bottom {
+        position: sticky; bottom: 14px; display: grid; place-items: center; width: 38px; height: 38px;
+        margin: 0 auto; border-radius: 50%; border: 1px solid var(--border); background: var(--surface);
+        color: var(--text); cursor: pointer; box-shadow: var(--shadow);
+      }
+      .to-bottom[hidden] { display: none; }
+      .to-bottom:hover { border-color: var(--accent); }
+
+      .md .table-wrap { overflow-x: auto; margin: 0.9em 0; border: 1px solid var(--border); border-radius: 12px; }
+      .md .table-wrap table { display: table; width: 100%; margin: 0; border-collapse: collapse; font-size: 0.95em; }
+      .md .table-wrap th, .md .table-wrap td { border: 0; border-bottom: 1px solid var(--border); padding: 8px 14px; text-align: left; }
+      .md .table-wrap th { background: var(--side); font-weight: 600; white-space: nowrap; }
+      .md .table-wrap tbody tr:nth-child(even) { background: var(--hover); }
+      .md .table-wrap tbody tr:last-child td { border-bottom: 0; }
+      .md .table-wrap table.numeric th, .md .table-wrap table.numeric td { text-align: center; font-variant-numeric: tabular-nums; }
+      .md .table-wrap table.numeric td:first-child, .md .table-wrap table.numeric th:first-child { font-weight: 600; background: var(--side); }
+      .md pre { font-size: 0.9em; line-height: 1.55; }
+
+      .md .katex { font-size: 1.08em; }
+      .md .katex-display { margin: 0.9em 0; overflow-x: auto; overflow-y: hidden; padding: 4px 0; }
+
+      .graph-dlg { width: min(640px, 94vw); }
+      .graph-box { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 8px; margin: 6px 0 10px; }
+      .graph-box svg { display: block; width: 100%; height: auto; max-height: 56vh; }
+      .graph-sum { font-size: 0.85rem; line-height: 1.5; }
+      .dlg-actions .primary { background: var(--accent); border-color: transparent; color: #fff; }
+      .dlg-actions .primary:hover { background: var(--accent); filter: brightness(1.1); }
 
       @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
       @keyframes pulse { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
