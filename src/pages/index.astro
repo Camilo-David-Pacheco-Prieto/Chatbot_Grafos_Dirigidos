@@ -719,17 +719,17 @@ const suggestions = [
         .del { opacity: 1; width: 40px; height: 40px; }
         .bar { padding: 6px 8px; }
         .stage { padding: 0 12px calc(10px + env(safe-area-inset-bottom)); }
-        .stage[data-empty='true'] { justify-content: flex-start; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
-        .stage[data-empty='true'] .hero { order: 1; flex: 1; display: flex; align-items: center; margin: 0; }
-        .stage[data-empty='true'] .suggestions { order: 2; margin: 0 0 14px; }
+        .stage[data-empty='true'] { justify-content: flex-end; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+        .stage[data-empty='true'] .hero { order: 1; margin: auto 0 22px; }
+        .stage[data-empty='true'] .suggestions { order: 2; margin: 0 0 auto; padding: 0 4px; }
         .stage[data-empty='true'] .composer-wrap { order: 3; }
-        .hero h2 { font-size: 1.85rem; gap: 10px; flex-direction: column; }
+        .hero h2 { font-size: 1.9rem; gap: 10px; }
         .thread { gap: 24px; padding-top: 8px; }
         .msg.user .body { max-width: 88%; }
-        .composer { padding-left: 18px; }
+        .composer { padding: 10px 10px 10px 20px; border-radius: 28px; }
+        .composer textarea { padding: 10px 0; }
         .disclaimer { margin-top: 6px; font-size: 0.7rem; }
-        .suggestions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        .sugg { justify-content: center; text-align: center; padding: 10px 10px; font-size: 0.88rem; min-height: 48px; }
+        .sugg { padding: 10px 14px 10px 12px; font-size: 0.95rem; background: var(--surface); border-color: transparent; }
       }
     </style>
   </body>
