@@ -50,7 +50,7 @@ src/pages/api/chat/[id].js        GET: estado de una conversación
 - Fijar, grupos, renombrar, orden y tema son **solo locales** (campos `pinned`, `group`, `renamed` en cada chat y `grafos-prefs-v1`); no tocan el backend ni el contrato. Mantén compatibles los datos antiguos de `localStorage`.
 - El pie mantiene el aviso de errores (en móvil solo ese, corto) y la nota de la fuente (Capítulo 9) en PC. La nota es informativa; no cambia lo que responde el agente.
 - Módulos de la interfaz: `src/scripts/render-math.js` (KaTeX; el HTML de las fórmulas se inserta tras DOMPurify) y `src/scripts/digraph.js` (detección y dibujo del dígrafo; devuelve `null` si no reconoce uno). Cancelar/Reintentar solo afectan al cliente (el servidor no se entera).
-- Versiones: `v1.0.0` = primera versión desplegada, `v2.0.0` = rediseño de la UI.
+- Versiones: `v1.0.0` = primera versión desplegada, `v2.0.0` = rediseño de la UI, `v3.0.0` = fórmulas KaTeX, visor de dígrafos y mejoras visuales, `v3.1.0` = botón Detener y Reintentar bajo el mensaje.
 
 ## Contrato de los endpoints
 
