@@ -75,7 +75,6 @@ const suggestions = [
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
           </button>
         </header>
-        <p class="source-note"><span>Las respuestas se basan en el Capítulo 9 de <em>Graph Theory with Applications to Engineering and Computer Science</em></span></p>
 
         <main class="stage" id="stage" data-empty="true">
           <div class="thread-scroll" id="thread-scroll">
@@ -107,7 +106,7 @@ const suggestions = [
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
               </button>
             </form>
-            <p class="disclaimer">El tutor puede cometer errores. Verifica lo importante.</p>
+            <p class="disclaimer">El tutor puede cometer errores. Verifica lo importante.<br />Las respuestas se basan en el Capítulo 9 de <em>Graph Theory with Applications to Engineering and Computer Science</em>.</p>
           </div>
 
           <div class="suggestions" id="suggestions">
@@ -1190,8 +1189,6 @@ const suggestions = [
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       }
       .bar[data-empty='true'] .chat-title { visibility: hidden; }
-      .source-note { margin: 0; padding: 0 16px 6px; text-align: center; font-size: 0.74rem; line-height: 1.4; color: var(--muted); }
-      .source-note span { display: inline-block; max-width: 520px; padding: 4px 12px; border-radius: 10px; background: var(--hover); text-wrap: balance; }
       .stage {
         flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center;
         padding: 0 24px 16px;
@@ -1283,7 +1280,7 @@ const suggestions = [
       }
       .composer button:hover:not(:disabled) { filter: brightness(1.1); }
       .composer button:disabled, .composer textarea:disabled { opacity: .5; cursor: not-allowed; }
-      .disclaimer { margin: 10px 0 0; text-align: center; color: var(--muted); font-size: 0.76rem; }
+      .disclaimer { margin: 10px 0 0; text-align: center; color: var(--muted); font-size: 0.74rem; line-height: 1.45; text-wrap: balance; }
 
       /* Sugerencias */
       .suggestions {
@@ -1316,7 +1313,6 @@ const suggestions = [
         .layout.side-open .sidebar { transform: none; box-shadow: 0 0 40px rgba(0, 0, 0, 0.35); }
         .nav-item, .chat-item { min-height: 44px; }
         .more { width: 40px; height: 40px; opacity: 1; }
-        .stage[data-empty='true'] .disclaimer { display: none; }
         .bar { padding: 6px 8px; }
         .stage { padding: 0 12px calc(10px + env(safe-area-inset-bottom)); }
         .stage[data-empty='true'] { justify-content: flex-end; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
