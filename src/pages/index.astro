@@ -106,7 +106,6 @@ const suggestions = [
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
               </button>
             </form>
-            <p class="disclaimer">El tutor puede cometer errores. Verifica lo importante.<br />Las respuestas se basan en el Capítulo 9 de <em>Graph Theory with Applications to Engineering and Computer Science</em>.</p>
           </div>
 
           <div class="suggestions" id="suggestions">
@@ -124,6 +123,10 @@ const suggestions = [
             ))}
           </div>
         </main>
+        <footer class="foot">
+          <p class="foot-ai"><span class="hide-m">El tutor puede</span><span class="show-m">Puede</span> cometer errores. Verifica lo importante.</p>
+          <p class="foot-src">Las respuestas se basan en el Capítulo 9 de <em>Graph Theory with Applications to Engineering and Computer Science</em>.</p>
+        </footer>
       </div>
     </div>
 
@@ -1280,7 +1283,9 @@ const suggestions = [
       }
       .composer button:hover:not(:disabled) { filter: brightness(1.1); }
       .composer button:disabled, .composer textarea:disabled { opacity: .5; cursor: not-allowed; }
-      .disclaimer { margin: 10px 0 0; text-align: center; color: var(--muted); font-size: 0.74rem; line-height: 1.45; text-wrap: balance; }
+      .foot { padding: 6px 16px calc(10px + env(safe-area-inset-bottom)); text-align: center; color: var(--muted); font-size: 0.74rem; line-height: 1.45; }
+      .foot p { margin: 0; text-wrap: balance; }
+      .show-m { display: none; }
 
       /* Sugerencias */
       .suggestions {
@@ -1314,8 +1319,8 @@ const suggestions = [
         .nav-item, .chat-item { min-height: 44px; }
         .more { width: 40px; height: 40px; opacity: 1; }
         .bar { padding: 6px 8px; }
-        .stage { padding: 0 12px calc(10px + env(safe-area-inset-bottom)); }
-        .stage[data-empty='true'] { justify-content: flex-end; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+        .stage { padding: 0 12px 6px; }
+        .stage[data-empty='true'] { justify-content: flex-end; padding-bottom: 6px; }
         .stage[data-empty='true'] .hero { order: 1; margin: auto 0 22px; }
         .stage[data-empty='true'] .suggestions { order: 2; margin: 0 auto auto; max-width: 360px; }
         .stage[data-empty='true'] .composer-wrap { order: 3; }
@@ -1324,7 +1329,10 @@ const suggestions = [
         .thread { gap: 24px; padding-top: 8px; }
         .msg.user .body { max-width: 88%; }
         .composer { padding-left: 18px; }
-        .disclaimer { margin-top: 6px; font-size: 0.7rem; }
+        .hide-m { display: none; }
+        .show-m { display: inline; }
+        .foot-src { display: none; }
+        .foot { padding-top: 2px; font-size: 0.7rem; }
         .sugg { padding: 9px 12px 9px 10px; font-size: 0.9rem; white-space: nowrap; background: var(--surface); border-color: transparent; }
       }
     </style>
