@@ -2,9 +2,10 @@
 export const prerender = false;
 const suggestions = [
   { icon: 'dig', label: 'Dígrafo', title: '¿Qué es un dígrafo?' },
-  { icon: 'mat', label: 'Matriz de adyacencia', title: '¿Cómo se representa un dígrafo con la matriz de adyacencia?' },
+  { icon: 'mat', label: 'Matriz', title: '¿Cómo se representa un dígrafo con la matriz de adyacencia?' },
   { icon: 'tor', label: 'Torneo', title: '¿Qué es un torneo?' },
-  { icon: 'deg', label: 'Grados de entrada y salida', title: '¿Qué son el grado de entrada y el grado de salida de un vértice?' },
+  { icon: 'deg', label: 'Grados', title: '¿Qué son el grado de entrada y el grado de salida de un vértice?' },
+  { icon: 'cam', label: 'Caminos y ciclos', title: '¿Qué es un camino dirigido y qué es un ciclo en un dígrafo?' },
 ];
 ---
 
@@ -81,7 +82,7 @@ const suggestions = [
                 </g>
                 <g fill="currentColor"><circle cx="14" cy="49" r="5" /><circle cx="29" cy="19" r="5" /><circle cx="51" cy="40" r="5" /></g>
               </svg>
-              <span id="greeting">¿Qué grafo exploramos hoy?</span>
+              <span id="greeting">Hola</span>
             </h2>
           </section>
 
@@ -105,6 +106,7 @@ const suggestions = [
                   {s.icon === 'dig' && <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="17" r="2.5" /><circle cx="18" cy="7" r="2.5" /><path d="M8 15.5 L15.5 8.8M15.5 8.8h-4M15.5 8.8v4" /></svg>}
                   {s.icon === 'mat' && <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" /><path d="M4 12h16M12 4v16" /></svg>}
                   {s.icon === 'tor' && <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18 L8 8 L12 14 L16 8 L20 18 Z" /></svg>}
+                  {s.icon === 'cam' && <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="5.5" r="2" /><circle cx="19" cy="12" r="2" /><circle cx="12" cy="18.5" r="2" /><path d="M6.5 10.6 10.5 7M13.5 7 17.5 10.6M17.5 13.4 13.5 17M10.5 17 6.5 13.4" /></svg>}
                   {s.icon === 'deg' && <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" /><path d="M3 12h6M6.5 9.5 9 12l-2.5 2.5M15 12h6M18.5 9.5 21 12l-2.5 2.5" /></svg>}
                 </span>
                 <span>{s.label}</span>
@@ -167,7 +169,7 @@ const suggestions = [
       function greet() {
         const h = new Date().getHours();
         const when = h < 6 ? 'Buenas noches' : h < 12 ? 'Buenos días' : h < 20 ? 'Buenas tardes' : 'Buenas noches';
-        $('greeting').textContent = `${when}. ¿Qué grafo exploramos?`;
+        $('greeting').textContent = `${when}`;
       }
 
       // ---------- Render ----------
@@ -302,6 +304,7 @@ const suggestions = [
       function autosize() {
         input.style.height = 'auto';
         input.style.height = Math.min(input.scrollHeight, 200) + 'px';
+        input.style.overflowY = input.scrollHeight > 200 ? 'auto' : 'hidden';
         const n = input.value.length;
         count.textContent = n > 1500 ? `${n}/2000` : '';
       }
@@ -604,7 +607,7 @@ const suggestions = [
       /* Saludo */
       .hero { margin-bottom: 28px; animation: rise .5s ease both; }
       .hero h2 {
-        display: flex; align-items: center; justify-content: center; gap: 14px; margin: 0;
+        display: flex; align-items: center; justify-content: center; gap: 12px; margin: 0; white-space: nowrap;
         font-family: var(--serif); font-weight: 400; font-size: clamp(1.8rem, 4vw, 2.5rem);
         line-height: 1.15; letter-spacing: -0.02em; text-wrap: balance; text-align: center;
       }
@@ -673,7 +676,7 @@ const suggestions = [
       .composer:focus-within { border-color: color-mix(in srgb, var(--accent) 60%, var(--border)); box-shadow: var(--shadow), 0 0 0 3px var(--accent-soft); }
       .composer textarea {
         flex: 1; min-width: 0; display: block; resize: none; border: 0; background: transparent; color: var(--text);
-        font: inherit; line-height: 1.5; min-height: 24px; max-height: 200px; outline: none; padding: 8px 0;
+        font: inherit; line-height: 1.5; min-height: 24px; max-height: 200px; outline: none; padding: 8px 0; overflow-y: hidden;
       }
       .composer textarea::placeholder { color: var(--muted); }
       .count { align-self: center; font-size: 0.74rem; color: var(--muted); }
@@ -721,15 +724,14 @@ const suggestions = [
         .stage { padding: 0 12px calc(10px + env(safe-area-inset-bottom)); }
         .stage[data-empty='true'] { justify-content: flex-end; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
         .stage[data-empty='true'] .hero { order: 1; margin: auto 0 22px; }
-        .stage[data-empty='true'] .suggestions { order: 2; margin: 0 0 auto; padding: 0 4px; }
+        .stage[data-empty='true'] .suggestions { order: 2; margin: 0 auto auto; max-width: 360px; }
         .stage[data-empty='true'] .composer-wrap { order: 3; }
-        .hero h2 { font-size: 1.9rem; gap: 10px; }
+        .hero h2 { font-size: 2rem; }
         .thread { gap: 24px; padding-top: 8px; }
         .msg.user .body { max-width: 88%; }
-        .composer { padding: 10px 10px 10px 20px; border-radius: 28px; }
-        .composer textarea { padding: 10px 0; }
+        .composer { padding-left: 18px; }
         .disclaimer { margin-top: 6px; font-size: 0.7rem; }
-        .sugg { padding: 10px 14px 10px 12px; font-size: 0.95rem; background: var(--surface); border-color: transparent; }
+        .sugg { padding: 9px 12px 9px 10px; font-size: 0.9rem; white-space: nowrap; background: var(--surface); border-color: transparent; }
       }
     </style>
   </body>
