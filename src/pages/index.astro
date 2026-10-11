@@ -1,9 +1,8 @@
 ---
 import pkg from '../../package.json';
-import { getCommit } from '../lib/env.js';
 
 export const prerender = false;
-const version = `v${pkg.version} · ${getCommit() || 'local'}`;
+const version = `v${pkg.version}`;
 const suggestions = [
   { icon: 'dig', label: 'Dígrafo', title: '¿Qué es un dígrafo?' },
   { icon: 'mat', label: 'Matriz', title: '¿Cómo se representa un dígrafo con la matriz de adyacencia?' },
@@ -873,7 +872,8 @@ const suggestions = [
         errorBox.textContent = '';
       }
       const SEND_ICON = send.innerHTML;
-      const STOP_ICON = '';
+      const STOP_ICON =
+        '<svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><rect x="0" y="0" width="16" height="16" rx="3.5" /></svg>';
       function setBusy(value) {
         busy = value;
         send.innerHTML = value ? STOP_ICON : SEND_ICON;
